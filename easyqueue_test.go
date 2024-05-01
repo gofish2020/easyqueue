@@ -20,12 +20,13 @@ func TestCreateEasyQueue(t *testing.T) {
 
 	for i := 0; i < 3; i++ { //总共来了3波
 
-		for i := int64(0); i < allJobNum; i++ {
+		for i := int64(0); i < allJobNum; i++ { // 每波1w QPS
 
-			jobWg.Add(1) // 默认job可以加入队列
+			jobWg.Add(1)
 
 			go func() {
 
+				// 放入队列
 				waitJob := queue.Push(func() {
 					count.Add(1)
 					jobWg.Done() // 加入成功
@@ -37,6 +38,7 @@ func TestCreateEasyQueue(t *testing.T) {
 				}
 
 				<-waitJob.Done()
+
 			}()
 
 		}

@@ -10,6 +10,7 @@ import (
 	"github.com/gofish2020/easyqueue"
 )
 
+// 创建队列
 var g_Queue = easyqueue.CreateEasyQueue(easyqueue.SetQueueParttion(1), easyqueue.SetQueueCapacity(100), easyqueue.SetWorkerNum(1))
 
 var cacheNum atomic.Int64
@@ -26,7 +27,7 @@ func main() {
 
 	r := gin.Default()
 
-	// 获取调用结果
+	// 结果统计
 	r.GET("/cache", func(c *gin.Context) {
 
 		c.JSON(http.StatusOK, gin.H{
@@ -47,11 +48,12 @@ func main() {
 		})
 	})
 
+	// 秒杀商品
 	r.GET("/ping", func(c *gin.Context) {
 
 		pingCount.Add(1)
 
-		// 如果已经售罄直接退出，不进入队列
+		// 如果已经售罄直接返回
 		if cacheNum.Load() == 0 {
 			selloutCount.Add(1)
 			c.JSON(http.StatusOK, gin.H{
@@ -63,6 +65,8 @@ func main() {
 
 		// 进入队列
 		waitJob := g_Queue.Push(func() {
+
+			// 写http请求中自己的业务逻辑....
 
 			//1. 先判断是否售罄
 			if cacheNum.Load() == 0 {
@@ -88,6 +92,7 @@ func main() {
 		// 阻塞等待
 		<-waitJob.Done()
 
+		// 如果阻塞返回，err不为nil，说明上面的队列任务没有执行，这里做补偿逻辑
 		if waitJob.Err() == easyqueue.ErrOverFlow { // 表示进入队列失败（队列满了)
 			errCount.Add(1)
 			c.JSON(http.StatusOK, gin.H{
@@ -95,5 +100,5 @@ func main() {
 			})
 		}
 	})
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	r.Run()
 }

@@ -7,8 +7,8 @@ import (
 )
 
 type worker struct {
-	queue  Queue
-	closed atomic.Int32
+	queue  Queue        // 工作协程监视的队列
+	closed atomic.Int32 // 是否停止工作协程标识
 }
 
 func createWorker(queue Queue) *worker {

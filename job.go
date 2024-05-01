@@ -14,6 +14,7 @@ type JobInterface interface {
 	DoJob()
 }
 
+// 创建任务
 func newJob(fn func()) JobInterface {
 
 	return &job{

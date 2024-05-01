@@ -22,6 +22,7 @@ func createJobQueue(cap int) *jobQueue {
 	}
 }
 
+// 将任务放入队列
 func (jq *jobQueue) Push(jb JobInterface) {
 
 	select {
@@ -57,7 +58,7 @@ type multiJobQueue struct {
 }
 
 // partition * perCap = All Capacity
-func createMultiJobQueue(partition, partitionCap int) *multiJobQueue {
+func createMultiJobQueue(partition, queueCapacity int) *multiJobQueue {
 
 	if partition < 1 {
 		panic("partition must bigger than 0")
@@ -70,11 +71,12 @@ func createMultiJobQueue(partition, partitionCap int) *multiJobQueue {
 	}
 
 	for i := 0; i < partition; i++ {
-		multi.queues = append(multi.queues, createJobQueue(partitionCap))
+		multi.queues = append(multi.queues, createJobQueue(queueCapacity))
 	}
 	return multi
 }
 
+// 按照 Round-Robin的方式选择队列，并放入任务
 func (mjq *multiJobQueue) Push(jb JobInterface) {
 	mjq.queues[mjq.pushIdx.Next()%uint64(mjq.parition)].Push(jb)
 }
@@ -83,6 +85,7 @@ func (mjq *multiJobQueue) Pop() JobInterface {
 	return mjq.queues[mjq.popIdx.Next()%uint64(mjq.parition)].Pop()
 }
 
+// 消费也是按照 Round-Robin的方式消费队列
 func (mjq *multiJobQueue) PopTimeout(duration time.Duration) JobInterface {
 
 	return mjq.queues[mjq.popIdx.Next()%uint64(mjq.parition)].PopTimeout(duration)

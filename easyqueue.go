@@ -1,9 +1,8 @@
 package easyqueue
 
-import "fmt"
-
 type configFunc func(*Config)
 
+// 能够缓存的任务数量 QueuePartition * QueueCapacity
 type Config struct {
 	QueuePartition int // 队列分区数量
 	QueueCapacity  int // 单个分区容量
@@ -37,9 +36,9 @@ func SetWorkerNum(num int) configFunc {
 }
 
 type EasyQueue struct {
-	config Config
-	queue  Queue
-	wg     *workerGroup
+	config Config       // 配置
+	queue  Queue        // 队列
+	wg     *workerGroup // 消费组
 }
 
 func (eq *EasyQueue) Push(fn func()) WaitJob {
@@ -59,7 +58,6 @@ func CreateEasyQueue(cfs ...configFunc) *EasyQueue {
 		config: conf,
 	}
 
-	fmt.Println(conf.QueueCapacity, conf.QueuePartition, conf.WorkersNum)
 	eq.queue = createMultiJobQueue(conf.QueuePartition, conf.QueueCapacity)
 	eq.wg = createWorkerMange(eq.queue, conf.WorkersNum)
 
